@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Query
 import pandas as pd
 import io
 
@@ -33,3 +33,22 @@ def get_data_types():
         return {"error": "No data loaded"}
     data_types = df.dtypes.astype(str).to_dict()
     return {"data_types": data_types}
+
+@app.get("/class-imbalance/")
+def check_class_imbalance(columns: list[str] = Query(None)):
+    if df is None:
+        return {"error": "No data loaded"}
+    
+    if columns is None:
+        columns = df.select_dtypes(include=['object', 'category']).columns.tolist()
+    
+    imbalance = {col: df[col].value_counts(normalize=True).to_dict() for col in columns if col in df.columns}
+    
+    return {"class_imbalance": imbalance}
+
+@app.get("/unique-values/")
+def get_unique_values():
+    if df is None:
+        return {"error": "No data loaded"}
+    unique_values = df.nunique().to_dict()
+    return {"unique_values": unique_values}
